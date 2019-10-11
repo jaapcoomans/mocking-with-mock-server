@@ -23,6 +23,7 @@
 
     <modules>
         <module>component-tests</module>
+        <module>game-service</module>
     </modules>
 
     <dependencyManagement>
