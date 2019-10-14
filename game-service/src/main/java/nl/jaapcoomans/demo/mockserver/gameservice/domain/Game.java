@@ -4,20 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-class Game {
+public class Game {
     private static final int MAX_TURNS = 10;
 
-    private CodeChecker codeChecker;
-
-    private UUID id = UUID.randomUUID();
+    private final UUID id = UUID.randomUUID();
     private final List<Turn> turns = new ArrayList<>();
 
     private final Code code;
 
     private GameStatus status = GameStatus.IN_PROGRESS;
 
-    Game(CodeChecker codeChecker, Code code) {
-        this.codeChecker = codeChecker;
+    Game(Code code) {
         this.code = code;
     }
 
@@ -32,7 +29,7 @@ class Game {
         return this.turns.size() >= MAX_TURNS || this.turns.stream().anyMatch(Turn::isWinningTurn);
     }
 
-    UUID getId() {
+    public UUID getId() {
         return id;
     }
 
@@ -40,12 +37,12 @@ class Game {
         return status;
     }
 
-    Result guess(Code guess) {
+    Result guess(Code guess, CodeChecker codeChecker) {
         if (this.isFinished()) {
             throw new IllegalGameSateException("No more guessing, the game is already finished!");
         }
 
-        var result = this.codeChecker.checkCode(code, guess);
+        var result = codeChecker.checkCode(code, guess);
         if (result.getBlackPins() == this.code.numberOfPins()) {
             this.status = GameStatus.WON;
         }

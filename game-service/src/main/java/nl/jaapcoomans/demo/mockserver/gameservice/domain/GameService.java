@@ -2,45 +2,40 @@ package nl.jaapcoomans.demo.mockserver.gameservice.domain;
 
 import nl.jaapcoomans.demo.mockserver.gameservice.remote.TournamentService;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class GameService {
-    private final Map<UUID, Game> games = new HashMap<>();
+    private GameRepository gameRepository;
 
     private CodeGenerator codeGenerator;
     private CodeChecker codeChecker;
     private TournamentService tournamentService;
 
-    public GameService(CodeGenerator codeGenerator, CodeChecker codeChecker, TournamentService tournamentService) {
+    GameService(GameRepository gameRepository, CodeGenerator codeGenerator, CodeChecker codeChecker, TournamentService tournamentService) {
+        this.gameRepository = gameRepository;
         this.codeGenerator = codeGenerator;
         this.codeChecker = codeChecker;
         this.tournamentService = tournamentService;
     }
 
-    public Game startNewGame() {
+    Game startNewGame() {
         var code = this.codeGenerator.generateCode();
-        var game = new Game(this.codeChecker, code);
-        this.games.put(game.getId(), game);
+        var game = new Game(code);
+        this.gameRepository.persist(game);
 
         return game;
     }
 
-    public Result guessCode(UUID gameId, Code guess) {
-        Game game = this.games.get(gameId);
-        if (game == null) {
-            throw new RuntimeException("Game does not exist");
-        }
+    Result guessCode(UUID gameId, Code guess) {
+        Game game = this.gameRepository.findById(gameId)
+                .orElseThrow(() -> new RuntimeException("Game does not exist"));
 
-        return game.guess(guess);
+        return game.guess(guess, this.codeChecker);
     }
 
     public Code getSolution(UUID gameId) {
-        Game game = this.games.get(gameId);
-        if (game == null) {
-            throw new RuntimeException("Game does not exist");
-        }
+        Game game = this.gameRepository.findById(gameId)
+                .orElseThrow(() -> new RuntimeException("Game does not exist"));
 
         return game.getCode();
     }
