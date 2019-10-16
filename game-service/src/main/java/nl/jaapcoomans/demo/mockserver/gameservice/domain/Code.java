@@ -2,11 +2,12 @@ package nl.jaapcoomans.demo.mockserver.gameservice.domain;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 public class Code {
     private final List<ColoredPin> code;
 
-    public Code(ColoredPin pin0, ColoredPin pin1, ColoredPin pin2, ColoredPin pin3) {
+    Code(ColoredPin pin0, ColoredPin pin1, ColoredPin pin2, ColoredPin pin3) {
         this.code = List.of(pin0, pin1, pin2, pin3);
     }
 
@@ -29,5 +30,16 @@ public class Code {
     @Override
     public int hashCode() {
         return this.code.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        var joiner = new StringJoiner(", ", "[Code: ", "]");
+
+        this.code.stream()
+                .map(Objects::toString)
+                .forEach(joiner::add);
+
+        return joiner.toString();
     }
 }
