@@ -33,7 +33,7 @@ public class Game {
         return id;
     }
 
-    GameStatus getStatus() {
+    public GameStatus getStatus() {
         return status;
     }
 

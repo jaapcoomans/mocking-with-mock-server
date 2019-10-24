@@ -1,5 +1,8 @@
 package nl.jaapcoomans.demo.mockserver.gameservice.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -7,12 +10,17 @@ import java.util.StringJoiner;
 public class Code {
     private final List<ColoredPin> code;
 
-    Code(ColoredPin pin0, ColoredPin pin1, ColoredPin pin2, ColoredPin pin3) {
+    @JsonCreator
+    public Code(@JsonProperty("pin0") ColoredPin pin0, @JsonProperty("pin1") ColoredPin pin1, @JsonProperty("pin2") ColoredPin pin2, @JsonProperty("pin3") ColoredPin pin3) {
         this.code = List.of(pin0, pin1, pin2, pin3);
     }
 
     int numberOfPins() {
         return this.code.size();
+    }
+
+    public ColoredPin getPin(int index) {
+        return this.code.get(index);
     }
 
     @Override

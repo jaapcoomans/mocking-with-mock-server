@@ -1,6 +1,5 @@
 package nl.jaapcoomans.demo.mockserver.gameservice.domain;
 
-import nl.jaapcoomans.demo.mockserver.gameservice.remote.TournamentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

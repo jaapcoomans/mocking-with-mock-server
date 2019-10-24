@@ -4,6 +4,7 @@ import nl.jaapcoomans.demo.mockserver.gameservice.domain.Game;
 import nl.jaapcoomans.demo.mockserver.gameservice.domain.GameRepository;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,5 +21,10 @@ public class InMemoryGameRepository implements GameRepository {
     public Game persist(Game game) {
         this.games.put(game.getId(), game);
         return game;
+    }
+
+    @Override
+    public List<Game> findAll() {
+        return List.copyOf(this.games.values());
     }
 }
