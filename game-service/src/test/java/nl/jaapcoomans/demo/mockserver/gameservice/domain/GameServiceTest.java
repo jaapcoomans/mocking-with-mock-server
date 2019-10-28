@@ -22,6 +22,8 @@ import static org.mockito.Mockito.when;
 class GameServiceTest {
     private static final Random RND = new SecureRandom();
 
+    private static final Result ALL_CORRECT = new Result(4, 0);
+
     private GameRepository repository = mock(GameRepository.class);
     private CodeGenerator codeGenerator = mock(CodeGenerator.class);
     private CodeChecker codeChecker = mock(CodeChecker.class);
@@ -124,6 +126,43 @@ class GameServiceTest {
         verifyZeroInteractions(tournamentService);
     }
 
+    @Test
+    @DisplayName("When a game is won, the tournament-service is called")
+    void testGameWonCallsTournamentService() {
+        // Given
+        var code = createACode();
+        var game = new Game(code);
+        when(repository.findById(game.getId())).thenReturn(Optional.of(game));
+
+        when(codeChecker.checkCode(any(), any())).thenReturn(ALL_CORRECT);
+
+        // When
+        this.gameService.guessCode(game.getId(), code);
+
+        // Then
+        verify(this.tournamentService).gameEnded(game.getId(), GameStatus.WON, 1);
+    }
+
+    @Test
+    @DisplayName("When a game is lost, the tournament-service is called")
+    void testGameLostCallsTournamentService() {
+        // Given
+        var code = createACode();
+        var game = new Game(code);
+        when(repository.findById(game.getId())).thenReturn(Optional.of(game));
+
+        when(codeChecker.checkCode(any(), any())).thenReturn(createANonWinningResult());
+
+        // When
+        var wrongGuess = createADifferentCode(code);
+        for (int i = 0; i < 10; i++) {
+            this.gameService.guessCode(game.getId(), wrongGuess);
+        }
+
+        // Then
+        verify(this.tournamentService).gameEnded(game.getId(), GameStatus.LOST, 10);
+    }
+
     private static Code createACode() {
         return new Code(pickAColor(), pickAColor(), pickAColor(), pickAColor());
     }
@@ -134,6 +173,12 @@ class GameServiceTest {
             differentCode = createACode();
         }
         return differentCode;
+    }
+
+    private static Result createANonWinningResult() {
+        final var blackPins = RND.nextInt(4);
+        final var whitePins = RND.nextInt(5 - blackPins);
+        return new Result(blackPins, whitePins);
     }
 
     private static ColoredPin pickAColor() {

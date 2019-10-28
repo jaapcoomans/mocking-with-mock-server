@@ -29,6 +29,10 @@ public class Game {
         return this.turns.size() >= MAX_TURNS || this.turns.stream().anyMatch(Turn::isWinningTurn);
     }
 
+    int getNumberOfGuesses() {
+        return this.turns.size();
+    }
+
     public UUID getId() {
         return id;
     }

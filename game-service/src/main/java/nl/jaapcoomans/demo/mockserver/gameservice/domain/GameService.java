@@ -30,7 +30,12 @@ public class GameService {
         Game game = this.gameRepository.findById(gameId)
                 .orElseThrow(() -> new RuntimeException("Game does not exist"));
 
-        return game.guess(guess, this.codeChecker);
+        var result = game.guess(guess, this.codeChecker);
+        if(game.isFinished()) {
+            this.tournamentService.gameEnded(game.getId(), game.getStatus(), game.getNumberOfGuesses());
+        }
+
+        return result;
     }
 
     public Code getSolution(UUID gameId) {
