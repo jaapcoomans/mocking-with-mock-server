@@ -44,4 +44,12 @@ public class GameServiceApi {
 
         requestContext.json(result);
     }
+
+    public void getSolution(Context requestContext) {
+        var gameId = UUID.fromString(requestContext.pathParam("id"));
+
+        var result = this.gameService.getSolution(gameId);
+
+        requestContext.json(result);
+    }
 }

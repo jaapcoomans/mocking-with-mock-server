@@ -46,6 +46,7 @@ public class GameServiceApplication {
                         post(api::createNewGame);
                         get(api::listAllGames);
                         get("/:id", api::findById);
+                        get("/:id/solution", api::getSolution);
                         post("/:id/guess", api::guessCode);
                     });
                 })
