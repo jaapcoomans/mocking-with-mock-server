@@ -1,7 +1,6 @@
 package nl.jaapcoomans.demo.mockserver.gameservice.remote;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import feign.Body;
 import feign.Feign;
 import feign.Headers;
 import feign.Logger;
@@ -13,7 +12,6 @@ import feign.slf4j.Slf4jLogger;
 import nl.jaapcoomans.demo.mockserver.gameservice.domain.Code;
 import nl.jaapcoomans.demo.mockserver.gameservice.domain.CodeChecker;
 import nl.jaapcoomans.demo.mockserver.gameservice.domain.CodeGenerator;
-import nl.jaapcoomans.demo.mockserver.gameservice.domain.GameStatus;
 import nl.jaapcoomans.demo.mockserver.gameservice.domain.TournamentService;
 
 import java.util.UUID;
@@ -83,7 +81,7 @@ public class RemoteServiceClientFactory {
                 .logLevel(Logger.Level.FULL)
                 .target(RemoteTournamentService.class, this.tournamentServiceUrl);
 
-        return remote::gameEnded;
+        return (gameId, result, guesses) -> remote.gameEnded(gameId, new GameEndedBody(gameId, result, guesses));
     }
 
     interface RemoteCodeGenerator {
@@ -99,17 +97,8 @@ public class RemoteServiceClientFactory {
     }
 
     interface RemoteTournamentService {
-        String BODY_TEMPLATE = """
-            %7B
-                "gameId": "{gameId}",
-                "result": "{result}",
-                "guesses": {guesses}
-            %7D
-            """;
-
         @RequestLine("PUT /games/{gameId}/result")
-        @Headers({"Content-Type: application/json", "Accept: application/json"})
-        @Body(BODY_TEMPLATE)
-        void gameEnded(@Param("gameId") UUID gameId, @Param("result") GameStatus result, @Param("guesses") int guesses);
+        @Headers("Content-Type: application/json")
+        void gameEnded(@Param("gameId") UUID gameId, GameEndedBody body);
     }
 }
