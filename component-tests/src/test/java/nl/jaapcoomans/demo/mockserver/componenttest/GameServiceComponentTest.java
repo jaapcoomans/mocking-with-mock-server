@@ -174,6 +174,27 @@ class GameServiceComponentTest {
         //FIXME: verifyZeroInteractions(tournamentService);
     }
 
+    @Test
+    @DisplayName("When a solution is requested for a game that has not yet ended, a HTTP 400 is returned.")
+    void testGetSolutionDelegatesToGame() {
+        // Given a newly started game
+        var game = prepareAGame();
+
+        // When
+        var response = gameServiceRequest()
+                .get("/games/" + game.getId() + "/solution");
+
+        // Then
+        response.then()
+                .statusCode(400)
+                .and()
+                .body("message", containsString("I'm not telling the code! The game is still in progress!"));
+
+        checkerMock.verifyZeroInteractions();
+        generatorMock.verifyZeroInteractions();
+        tournamentServiceMock.verifyZeroInteractions();
+    }
+
     private Game prepareAGame() {
         generatorMock
                 .when(request()
