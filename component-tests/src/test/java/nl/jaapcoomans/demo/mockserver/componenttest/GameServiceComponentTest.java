@@ -5,11 +5,13 @@ import io.restassured.specification.RequestSpecification;
 import nl.jaapcoomans.demo.mockserver.componenttest.restapimodel.Game;
 import nl.jaapcoomans.demo.mockserver.componenttest.restapimodel.GameStatus;
 import nl.jaapcoomans.demo.mockserver.componenttest.restapimodel.Result;
+import org.json.JSONException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MockServerContainer;
 import org.testcontainers.containers.Network;
@@ -24,6 +26,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+import static org.skyscreamer.jsonassert.JSONAssert.assertEquals;
 
 @Testcontainers
 class GameServiceComponentTest {
@@ -42,25 +45,34 @@ class GameServiceComponentTest {
             .withNetworkAliases("checker");
 
     @Container
+    private static MockServerContainer tournamentServiceContainer = new MockServerContainer()
+            .withNetwork(network)
+            .withNetworkAliases("tournament-svc");
+
+    @Container
     private static GenericContainer gameService = new GenericContainer(gameServiceImage)
             .withEnv("GENERATOR_URL", "http://generator:1080")
             .withEnv("CHECKER_URL", "http://checker:1080")
+            .withEnv("TOURNAMENT_SVC_URL", "http://tournament-svc:1080")
             .withNetwork(network)
             .withExposedPorts(8080);
 
     private static MockServerClient generatorMock;
     private static MockServerClient checkerMock;
+    private static MockServerClient tournamentServiceMock;
 
     @BeforeAll
     static void init() {
         generatorMock = new MockServerClient("localhost", generatorContainer.getServerPort());
         checkerMock = new MockServerClient("localhost", checkerContainer.getServerPort());
+        tournamentServiceMock = new MockServerClient("localhost", tournamentServiceContainer.getServerPort());
     }
 
     @BeforeEach
     void resetMocks() {
         generatorMock.reset();
         checkerMock.reset();
+        tournamentServiceMock.reset();
     }
 
     @Test
@@ -95,7 +107,7 @@ class GameServiceComponentTest {
     }
 
     @Test
-    @DisplayName("When a guess is made for a game that does not exist, a 400 is returned.")
+    @DisplayName("When a guess is made for a game that does not exist, a HTTP 400 is returned.")
     void testGuessNonExistingGame() {
         // Given no active games
 
@@ -114,11 +126,11 @@ class GameServiceComponentTest {
 
         generatorMock.verifyZeroInteractions();
         checkerMock.verifyZeroInteractions();
-        //FIXME: verifyZeroInteractions(tournamentService);
+        tournamentServiceMock.verifyZeroInteractions();
     }
 
     @Test
-    @DisplayName("When the solution is requested for a game that does not exist, a 400 is returned.")
+    @DisplayName("When the solution is requested for a game that does not exist, a HTTP 400 is returned.")
     void testGetSolutionNonExistingGame() {
         // Given no active games
 
@@ -171,7 +183,9 @@ class GameServiceComponentTest {
         assertThat(result.getWhitePins()).isEqualTo(0);
 
         checkerMock.verify(checkRequest);
-        //FIXME: verifyZeroInteractions(tournamentService);
+
+        generatorMock.verifyZeroInteractions();
+        tournamentServiceMock.verifyZeroInteractions();
     }
 
     @Test
@@ -195,7 +209,55 @@ class GameServiceComponentTest {
         tournamentServiceMock.verifyZeroInteractions();
     }
 
+    @Test
+    @DisplayName("When a game is won, the tournament-service is called")
+    void testGameWonCallsTournamentService() throws JSONException {
+        // Given
+        var code = createACode();
+        var game = prepareAGame(code);
+
+        var checkRequest = request()
+                .withMethod("POST")
+                .withHeader("Accept", "application/json")
+                .withPath("/check");
+
+        var checkResponse = response()
+                .withHeader("Content-Type", "application/json")
+                .withStatusCode(200)
+                .withBody(createASuccessResult());
+
+        checkerMock.when(checkRequest).respond(checkResponse);
+
+        var gameResultRequest = request()
+                .withMethod("PUT")
+                .withPath("/games/" + game.getId() + "/result");
+
+        var gameResultResponse = response()
+                .withHeader("Content-Type", "application/json")
+                .withStatusCode(201);
+
+        tournamentServiceMock.when(gameResultRequest).respond(gameResultResponse);
+
+        // When
+        var response = gameServiceRequest(code).post("/games/" + game.getId() + "/guess");
+
+        // Then
+        response.then().statusCode(200);
+        tournamentServiceMock.verify(gameResultRequest);
+
+        var expectedRequestBody = expectedGameEndedBody(game.getId());
+        var actualRequestBody = tournamentServiceMock.retrieveRecordedRequests(gameResultRequest)[0].getBodyAsString();
+
+        assertEquals(expectedRequestBody, actualRequestBody, JSONCompareMode.LENIENT);
+    }
+
     private Game prepareAGame() {
+        String code = createACode();
+
+        return prepareAGame(code);
+    }
+
+    private Game prepareAGame(String code) {
         generatorMock
                 .when(request()
                         .withMethod("GET")
@@ -203,10 +265,15 @@ class GameServiceComponentTest {
                         .withPath("/generate"))
                 .respond(response()
                         .withHeader("Content-Type", "application/json")
-                        .withBody(createACode())
+                        .withBody(code)
                         .withStatusCode(200));
 
-        return gameServiceRequest().post("/games").as(Game.class);
+        var game = gameServiceRequest().post("/games").as(Game.class);
+
+        // Reset the mock in order to verify interactions that took place after this prep.
+        generatorMock.reset();
+
+        return game;
     }
 
     private static RequestSpecification gameServiceRequest() {
@@ -242,5 +309,25 @@ class GameServiceComponentTest {
                 "whitePins": "0"
             }
         """;
+    }
+
+    private String createASuccessResult() {
+        return """
+            {
+                "blackPins": "4",
+                "whitePins": "0"
+            }
+        """;
+    }
+
+    @SuppressWarnings("removal")
+    private String expectedGameEndedBody(UUID gameId) {
+        return """
+        {
+            "gameId": "%s",
+            "status": "WON",
+            "guesses": 1
+        }
+        """.formatted(gameId);
     }
 }
