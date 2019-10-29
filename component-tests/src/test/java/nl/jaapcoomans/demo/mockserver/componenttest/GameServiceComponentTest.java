@@ -35,9 +35,10 @@ class GameServiceComponentTest {
     private static Network network = Network.newNetwork();
 
     @Container
-    private static MockServerContainer generatorContainer = new MockServerContainer()
-            .withNetwork(network)
-            .withNetworkAliases("generator");
+    private static MockServerContainer generatorContainer =
+            new MockServerContainer()
+                    .withNetwork(network)
+                    .withNetworkAliases("generator");
 
     @Container
     private static MockServerContainer checkerContainer = new MockServerContainer()
@@ -50,60 +51,60 @@ class GameServiceComponentTest {
             .withNetworkAliases("tournament-svc");
 
     @Container
-    private static GenericContainer gameService = new GenericContainer(gameServiceImage)
-            .withEnv("GENERATOR_URL", "http://generator:1080")
-            .withEnv("CHECKER_URL", "http://checker:1080")
-            .withEnv("TOURNAMENT_SVC_URL", "http://tournament-svc:1080")
-            .withNetwork(network)
-            .withExposedPorts(8080);
+    private static GenericContainer gameService =
+            new GenericContainer(gameServiceImage)
+                    .withEnv("GENERATOR_URL", "http://generator:1080")
+                    .withEnv("CHECKER_URL", "http://checker:1080")
+                    .withEnv("TOURNAMENT_SVC_URL", "http://tournament-svc:1080")
+                    .withNetwork(network)
+                    .withExposedPorts(8080);
 
     private static MockServerClient generatorMock;
     private static MockServerClient checkerMock;
-    private static MockServerClient tournamentServiceMock;
+    private static MockServerClient tournamentMock;
 
     @BeforeAll
     static void init() {
         generatorMock = new MockServerClient("localhost", generatorContainer.getServerPort());
         checkerMock = new MockServerClient("localhost", checkerContainer.getServerPort());
-        tournamentServiceMock = new MockServerClient("localhost", tournamentServiceContainer.getServerPort());
+        tournamentMock = new MockServerClient("localhost", tournamentServiceContainer.getServerPort());
     }
 
     @BeforeEach
     void resetMocks() {
         generatorMock.reset();
         checkerMock.reset();
-        tournamentServiceMock.reset();
+        tournamentMock.reset();
     }
 
     @Test
     @DisplayName("When a game is started, it must be in progress.")
     void testStartGame() {
         // Given a generator service
-        var request = request()
-                .withMethod("GET")
-                .withHeader("Accept", "application/json")
-                .withPath("/generate");
-
         generatorMock
-                .when(request)
+                .when(request()
+                        .withMethod("GET")
+                        .withHeader("Accept", "application/json")
+                        .withPath("/generate"))
                 .respond(response()
                         .withHeader("Content-Type", "application/json")
                         .withBody(createACode())
                         .withStatusCode(200));
 
         // When a new game is started
-        var response = RestAssured.given()
+        var game = RestAssured.given()
                 .header("Accept", "application/json")
                 .baseUri("http://localhost:" + gameService.getFirstMappedPort())
-                .when().post("/games");
-        var game = response.as(Game.class);
+                .when().post("/games")
+                .as(Game.class);
 
         // Then the game must be in progress and only the generator be called.
         assertThat(game.getStatus()).isEqualTo(GameStatus.IN_PROGRESS);
 
         generatorMock.verify(request("/generate").withMethod("GET"));
+
         checkerMock.verifyZeroInteractions();
-        //FIXME: verifyZeroInteractions(tournamentService);
+        tournamentMock.verifyZeroInteractions();
     }
 
     @Test
@@ -126,7 +127,7 @@ class GameServiceComponentTest {
 
         generatorMock.verifyZeroInteractions();
         checkerMock.verifyZeroInteractions();
-        tournamentServiceMock.verifyZeroInteractions();
+        tournamentMock.verifyZeroInteractions();
     }
 
     @Test
@@ -149,7 +150,7 @@ class GameServiceComponentTest {
 
         generatorMock.verifyZeroInteractions();
         checkerMock.verifyZeroInteractions();
-        //FIXME: verifyZeroInteractions(tournamentService);
+        tournamentMock.verifyZeroInteractions();
     }
 
     @Test
@@ -159,12 +160,10 @@ class GameServiceComponentTest {
         var game = prepareAGame();
         var guess = createACode();
 
-        var checkRequest = request()
-                .withMethod("POST")
-                .withHeader("Accept", "application/json")
-                .withPath("/check");
-
-        checkerMock.when(checkRequest)
+        checkerMock
+                .when(request()
+                        .withMethod("POST")
+                        .withPath("/check"))
                 .respond(response()
                         .withHeader("Content-Type", "application/json")
                         .withStatusCode(200)
@@ -182,10 +181,13 @@ class GameServiceComponentTest {
         assertThat(result.getBlackPins()).isEqualTo(0);
         assertThat(result.getWhitePins()).isEqualTo(0);
 
-        checkerMock.verify(checkRequest);
+        checkerMock.verify(request()
+                .withMethod("POST")
+                .withHeader("Accept", "application/json")
+                .withPath("/check"));
 
         generatorMock.verifyZeroInteractions();
-        tournamentServiceMock.verifyZeroInteractions();
+        tournamentMock.verifyZeroInteractions();
     }
 
     @Test
@@ -206,7 +208,7 @@ class GameServiceComponentTest {
 
         checkerMock.verifyZeroInteractions();
         generatorMock.verifyZeroInteractions();
-        tournamentServiceMock.verifyZeroInteractions();
+        tournamentMock.verifyZeroInteractions();
     }
 
     @Test
@@ -216,39 +218,41 @@ class GameServiceComponentTest {
         var code = createACode();
         var game = prepareAGame(code);
 
-        var checkRequest = request()
-                .withMethod("POST")
-                .withHeader("Accept", "application/json")
-                .withPath("/check");
+        checkerMock
+                .when(request()
+                        .withMethod("POST")
+                        .withHeader("Accept", "application/json")
+                        .withPath("/check"))
+                .respond(response()
+                        .withHeader("Content-Type", "application/json")
+                        .withStatusCode(200)
+                        .withBody(createASuccessResult()));
 
-        var checkResponse = response()
-                .withHeader("Content-Type", "application/json")
-                .withStatusCode(200)
-                .withBody(createASuccessResult());
-
-        checkerMock.when(checkRequest).respond(checkResponse);
-
-        var gameResultRequest = request()
-                .withMethod("PUT")
-                .withPath("/games/" + game.getId() + "/result");
-
-        var gameResultResponse = response()
-                .withHeader("Content-Type", "application/json")
-                .withStatusCode(201);
-
-        tournamentServiceMock.when(gameResultRequest).respond(gameResultResponse);
+        tournamentMock
+                .when(request()
+                        .withMethod("PUT")
+                        .withPath("/games/" + game.getId() + "/result"))
+                .respond(response()
+                        .withHeader("Content-Type", "application/json")
+                        .withStatusCode(201));
 
         // When
         var response = gameServiceRequest(code).post("/games/" + game.getId() + "/guess");
 
-        // Then
+        // Then a call must be made to the tournament service
         response.then().statusCode(200);
-        tournamentServiceMock.verify(gameResultRequest);
 
-        var expectedRequestBody = expectedGameEndedBody(game.getId());
-        var actualRequestBody = tournamentServiceMock.retrieveRecordedRequests(gameResultRequest)[0].getBodyAsString();
+        var actualRequests = tournamentMock.retrieveRecordedRequests(
+                request()
+                        .withMethod("PUT")
+                        .withPath("/games/.*/result"));
 
-        assertEquals(expectedRequestBody, actualRequestBody, JSONCompareMode.LENIENT);
+        assertThat(actualRequests.length).isEqualTo(1);
+
+        var expectedBody = expectedGameEndedBody(game.getId());
+        var actualBody = actualRequests[0].getBodyAsString();
+
+        assertEquals(expectedBody, actualBody, JSONCompareMode.LENIENT);
     }
 
     private Game prepareAGame() {
