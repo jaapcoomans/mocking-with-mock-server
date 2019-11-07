@@ -46,7 +46,7 @@ class GameServiceComponentTest {
             .withNetworkAliases("checker");
 
     @Container
-    private static MockServerContainer tournamentServiceContainer = new MockServerContainer()
+    private static MockServerContainer tournamentContainer = new MockServerContainer()
             .withNetwork(network)
             .withNetworkAliases("tournament-svc");
 
@@ -65,9 +65,17 @@ class GameServiceComponentTest {
 
     @BeforeAll
     static void init() {
-        generatorMock = new MockServerClient(generatorContainer.getContainerIpAddress(), generatorContainer.getServerPort());
-        checkerMock = new MockServerClient(checkerContainer.getContainerIpAddress(), checkerContainer.getServerPort());
-        tournamentMock = new MockServerClient(tournamentServiceContainer.getContainerIpAddress(), tournamentServiceContainer.getServerPort());
+        generatorMock = new MockServerClient(
+                generatorContainer.getContainerIpAddress(),
+                generatorContainer.getServerPort());
+
+        checkerMock = new MockServerClient(
+                checkerContainer.getContainerIpAddress(),
+                checkerContainer.getServerPort());
+
+        tournamentMock = new MockServerClient(
+                tournamentContainer.getContainerIpAddress(),
+                tournamentContainer.getServerPort());
     }
 
     @BeforeEach
