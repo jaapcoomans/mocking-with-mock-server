@@ -14,7 +14,7 @@
 
     <properties>
         <feign.version>10.4.0</feign.version>
-        <jackson.version>2.9.9</jackson.version>
+        <jackson.version>2.10.0</jackson.version>
     </properties>
 
     <dependencies>
