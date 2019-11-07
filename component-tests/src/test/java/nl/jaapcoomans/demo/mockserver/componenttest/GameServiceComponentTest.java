@@ -65,9 +65,9 @@ class GameServiceComponentTest {
 
     @BeforeAll
     static void init() {
-        generatorMock = new MockServerClient("localhost", generatorContainer.getServerPort());
-        checkerMock = new MockServerClient("localhost", checkerContainer.getServerPort());
-        tournamentMock = new MockServerClient("localhost", tournamentServiceContainer.getServerPort());
+        generatorMock = new MockServerClient(generatorContainer.getContainerIpAddress(), generatorContainer.getServerPort());
+        checkerMock = new MockServerClient(checkerContainer.getContainerIpAddress(), checkerContainer.getServerPort());
+        tournamentMock = new MockServerClient(tournamentServiceContainer.getContainerIpAddress(), tournamentServiceContainer.getServerPort());
     }
 
     @BeforeEach
