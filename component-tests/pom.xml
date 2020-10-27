@@ -5,6 +5,9 @@
 
     <artifactId>component-tests</artifactId>
     <packaging>jar</packaging>
+    <properties>
+        <rest-assured.version>4.3.1</rest-assured.version>
+    </properties>
 
     <parent>
         <groupId>nl.jaapcoomans.demo.mockserver</groupId>
@@ -63,7 +66,7 @@
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
-            <version>4.1.2</version>
+            <version>${rest-assured.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
