@@ -5,15 +5,18 @@
 
     <artifactId>component-tests</artifactId>
     <packaging>jar</packaging>
-    <properties>
-        <rest-assured.version>4.3.1</rest-assured.version>
-    </properties>
 
     <parent>
         <groupId>nl.jaapcoomans.demo.mockserver</groupId>
         <artifactId>parent</artifactId>
         <version>local-SNAPSHOT</version>
     </parent>
+
+    <properties>
+        <jsonassert.version>1.5.0</jsonassert.version>
+        <mockserver.version>5.10.0</mockserver.version>
+        <rest-assured.version>4.3.1</rest-assured.version>
+    </properties>
 
     <dependencies>
         <!-- Logging -->
@@ -38,11 +41,18 @@
             <artifactId>assertj-core</artifactId>
         </dependency>
 
+        <!-- JSONassert -->
+        <dependency>
+            <groupId>org.skyscreamer</groupId>
+            <artifactId>jsonassert</artifactId>
+            <version>${jsonassert.version}</version>
+        </dependency>
+
         <!-- MockServer Client -->
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-client-java</artifactId>
-            <version>5.5.4</version>
+            <version>${mockserver.version}</version>
             <scope>test</scope>
         </dependency>
 

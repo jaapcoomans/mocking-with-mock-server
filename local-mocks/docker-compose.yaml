@@ -1,14 +1,14 @@
 version: "3"
 services:
   generator:
-    image: jamesdbloom/mockserver:mockserver-5.5.4
+    image: jamesdbloom/mockserver:mockserver-5.10.0
     ports:
       - "8081:1080"
   checker:
-    image: jamesdbloom/mockserver:mockserver-5.5.4
+    image: jamesdbloom/mockserver:mockserver-5.10.0
     ports:
       - "8082:1080"
   tournamen-service:
-    image: jamesdbloom/mockserver:mockserver-5.5.4
+    image: jamesdbloom/mockserver:mockserver-5.10.0
     ports:
       - "8083:1080"

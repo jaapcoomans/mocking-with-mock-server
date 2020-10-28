@@ -10,7 +10,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockserver.Version;
 import org.mockserver.client.MockServerClient;
+import org.mockserver.model.HttpRequest;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MockServerContainer;
@@ -36,19 +38,21 @@ class GameServiceComponentTest {
 
     @Container
     private static MockServerContainer generatorContainer =
-            new MockServerContainer()
+            new MockServerContainer(Version.getVersion())
                     .withNetwork(network)
                     .withNetworkAliases("generator");
 
     @Container
-    private static MockServerContainer checkerContainer = new MockServerContainer()
-            .withNetwork(network)
-            .withNetworkAliases("checker");
+    private static MockServerContainer checkerContainer =
+            new MockServerContainer(Version.getVersion())
+                    .withNetwork(network)
+                    .withNetworkAliases("checker");
 
     @Container
-    private static MockServerContainer tournamentContainer = new MockServerContainer()
-            .withNetwork(network)
-            .withNetworkAliases("tournament-svc");
+    private static MockServerContainer tournamentContainer =
+            new MockServerContainer(Version.getVersion())
+                    .withNetwork(network)
+                    .withNetworkAliases("tournament-svc");
 
     @Container
     private static GenericContainer gameService =
@@ -258,7 +262,7 @@ class GameServiceComponentTest {
         assertThat(actualRequests.length).isEqualTo(1);
 
         var expectedBody = expectedGameEndedBody(game.getId());
-        var actualBody = actualRequests[0].getBodyAsString();
+        var actualBody = ((HttpRequest) actualRequests[0]).getBodyAsString();
 
         assertEquals(expectedBody, actualBody, JSONCompareMode.LENIENT);
     }
@@ -305,41 +309,40 @@ class GameServiceComponentTest {
 
     private String createACode() {
         return """
-            {
-                "pin0": "RED",
-                "pin1": "GREEN",
-                "pin2": "BLUE",
-                "pin3": "YELLOW"
-            }
-        """;
+                    {
+                        "pin0": "RED",
+                        "pin1": "GREEN",
+                        "pin2": "BLUE",
+                        "pin3": "YELLOW"
+                    }
+                """;
     }
 
     private String createAFailedResult() {
         return """
-            {
-                "blackPins": "0",
-                "whitePins": "0"
-            }
-        """;
+                    {
+                        "blackPins": "0",
+                        "whitePins": "0"
+                    }
+                """;
     }
 
     private String createASuccessResult() {
         return """
-            {
-                "blackPins": "4",
-                "whitePins": "0"
-            }
-        """;
+                    {
+                        "blackPins": "4",
+                        "whitePins": "0"
+                    }
+                """;
     }
 
-    @SuppressWarnings("removal")
     private String expectedGameEndedBody(UUID gameId) {
         return """
-        {
-            "gameId": "%s",
-            "status": "WON",
-            "guesses": 1
-        }
-        """.formatted(gameId);
+                {
+                    "gameId": "%s",
+                    "status": "WON",
+                    "guesses": 1
+                }
+                """.formatted(gameId);
     }
 }
