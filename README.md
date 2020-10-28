@@ -28,6 +28,7 @@ This talk was given at the following conferences:
 
 | Conference     | Date         | Session details | Video link |
 |----------------|--------------|-----------------|------------|
-| J-Fall         | 10 May 2019  | [Session details](https://jfall.nl/sessions/mocking-your-microservices-with-mock-server/) | t.b.a. |
+| J-Fall         | 10 May 2019  | [Session details](https://jfall.nl/sessions/mocking-your-microservices-with-mock-server/) | [YouTube video](https://youtu.be/im6-uLjawaU) |
 | Devoxx Belgium | 16 May 2019  | [Session details](https://devoxx.be/talk/?id=13606) | [YouTube video](https://youtu.be/oipykrGdsk8) |
-| JavaLand       | 17/18 March 2020 | [Session details](https://events.rainfocus.com/widget/oracle/oow19/catalogcodeone19?search=dev1301) | n/a |
+| DevCon Live Java Week| 03 November 2020 | [Session details](https://www.dev-con.ro/agenda/1-java-week#channel-2) | n/a |
+
