@@ -13,8 +13,9 @@
     </parent>
 
     <properties>
-        <feign.version>10.4.0</feign.version>
-        <jackson.version>2.10.0</jackson.version>
+        <feign.version>11.0</feign.version>
+        <jackson.version>2.11.3</jackson.version>
+        <javalin.version>3.11.2</javalin.version>
     </properties>
 
     <dependencies>
@@ -22,7 +23,7 @@
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
-            <version>3.3.0</version>
+            <version>${javalin.version}</version>
         </dependency>
 
         <!-- Logging -->
