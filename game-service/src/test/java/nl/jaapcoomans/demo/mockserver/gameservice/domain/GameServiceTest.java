@@ -16,7 +16,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class GameServiceTest {
@@ -24,12 +24,13 @@ class GameServiceTest {
 
     private static final Result ALL_CORRECT = new Result(4, 0);
 
-    private GameRepository repository = mock(GameRepository.class);
-    private CodeGenerator codeGenerator = mock(CodeGenerator.class);
-    private CodeChecker codeChecker = mock(CodeChecker.class);
-    private TournamentService tournamentService = mock(TournamentService.class);
+    private final GameRepository repository = mock(GameRepository.class);
+    private final CodeGenerator codeGenerator = mock(CodeGenerator.class);
+    private final CodeChecker codeChecker = mock(CodeChecker.class);
+    private final TournamentService tournamentService = mock(TournamentService.class);
 
-    private GameService gameService = new GameService(repository, codeGenerator, codeChecker, tournamentService);
+    private final GameService gameService =
+            new GameService(repository, codeGenerator, codeChecker, tournamentService);
 
     @BeforeEach
     void resetMocks() {
@@ -50,8 +51,8 @@ class GameServiceTest {
 
         verify(repository).persist(game);
         verify(codeGenerator).generateCode();
-        verifyZeroInteractions(codeChecker);
-        verifyZeroInteractions(tournamentService);
+        verifyNoInteractions(codeChecker);
+        verifyNoInteractions(tournamentService);
     }
 
     @Test
@@ -68,9 +69,9 @@ class GameServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Game does not exist");
 
-        verifyZeroInteractions(codeGenerator);
-        verifyZeroInteractions(codeChecker);
-        verifyZeroInteractions(tournamentService);
+        verifyNoInteractions(codeGenerator);
+        verifyNoInteractions(codeChecker);
+        verifyNoInteractions(tournamentService);
     }
 
     @Test
@@ -87,9 +88,9 @@ class GameServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Game does not exist");
 
-        verifyZeroInteractions(codeGenerator);
-        verifyZeroInteractions(codeChecker);
-        verifyZeroInteractions(tournamentService);
+        verifyNoInteractions(codeGenerator);
+        verifyNoInteractions(codeChecker);
+        verifyNoInteractions(tournamentService);
     }
 
     @Test
@@ -105,8 +106,8 @@ class GameServiceTest {
 
         // Then
         verify(game).guess(eq(guess), any());
-        verifyZeroInteractions(codeGenerator);
-        verifyZeroInteractions(tournamentService);
+        verifyNoInteractions(codeGenerator);
+        verifyNoInteractions(tournamentService);
     }
 
     @Test
@@ -121,9 +122,9 @@ class GameServiceTest {
 
         // Then
         verify(game).getCode();
-        verifyZeroInteractions(codeGenerator);
-        verifyZeroInteractions(codeChecker);
-        verifyZeroInteractions(tournamentService);
+        verifyNoInteractions(codeGenerator);
+        verifyNoInteractions(codeChecker);
+        verifyNoInteractions(tournamentService);
     }
 
     @Test

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockserver.Version;
 import org.mockserver.client.MockServerClient;
-import org.mockserver.model.HttpRequest;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MockServerContainer;
@@ -32,31 +31,32 @@ import static org.skyscreamer.jsonassert.JSONAssert.assertEquals;
 
 @Testcontainers
 class GameServiceComponentTest {
-    private static ImageFromDockerfile gameServiceImage = new ImageFromDockerfile().withFileFromPath(".", Paths.get("../game-service"));
+    private static final ImageFromDockerfile gameServiceImage =
+            new ImageFromDockerfile().withFileFromPath(".", Paths.get("../game-service"));
 
-    private static Network network = Network.newNetwork();
+    private static final Network network = Network.newNetwork();
 
     @Container
-    private static MockServerContainer generatorContainer =
+    private static final MockServerContainer generatorContainer =
             new MockServerContainer(Version.getVersion())
                     .withNetwork(network)
                     .withNetworkAliases("generator");
 
     @Container
-    private static MockServerContainer checkerContainer =
+    private static final MockServerContainer checkerContainer =
             new MockServerContainer(Version.getVersion())
                     .withNetwork(network)
                     .withNetworkAliases("checker");
 
     @Container
-    private static MockServerContainer tournamentContainer =
+    private static final MockServerContainer tournamentContainer =
             new MockServerContainer(Version.getVersion())
                     .withNetwork(network)
                     .withNetworkAliases("tournament-svc");
 
     @Container
-    private static GenericContainer gameService =
-            new GenericContainer(gameServiceImage)
+    private static final GenericContainer<?> gameService =
+            new GenericContainer<>(gameServiceImage)
                     .withEnv("GENERATOR_URL", "http://generator:1080")
                     .withEnv("CHECKER_URL", "http://checker:1080")
                     .withEnv("TOURNAMENT_SVC_URL", "http://tournament-svc:1080")
@@ -262,7 +262,7 @@ class GameServiceComponentTest {
         assertThat(actualRequests.length).isEqualTo(1);
 
         var expectedBody = expectedGameEndedBody(game.getId());
-        var actualBody = ((HttpRequest) actualRequests[0]).getBodyAsString();
+        var actualBody = actualRequests[0].getBodyAsString();
 
         assertEquals(expectedBody, actualBody, JSONCompareMode.LENIENT);
     }
