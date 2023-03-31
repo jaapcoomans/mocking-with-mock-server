@@ -14,7 +14,7 @@
 
     <properties>
         <feign.version>11.0</feign.version>
-        <jackson.version>2.13.4.1</jackson.version>
+        <jackson.version>2.13.4.2</jackson.version>
         <javalin.version>3.11.2</javalin.version>
     </properties>
 
